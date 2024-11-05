@@ -18,8 +18,10 @@ public class Main {
 
         // panel
         JPanel inputPanel = new JPanel();
-        inputPanel.setLayout(new GridLayout(4, 2, 10, 10));
+        inputPanel.setLayout(new GridLayout(5, 2, 10, 10));
 
+        JLabel typeLabel = new JLabel("Appointment Type (One-time, Daily, Monthly):");
+        JTextField typeField = new JTextField();
         JLabel startDateLabel = new JLabel("Start Date (yyyy-mm-dd):");
         JTextField startDateField = new JTextField();
         JLabel endDateLabel = new JLabel("End Date (yyyy-mm-dd):");
@@ -27,6 +29,8 @@ public class Main {
         JLabel descriptionLabel = new JLabel("Description:");
         JTextField descriptionField = new JTextField();
 
+        inputPanel.add(typeLabel);
+        inputPanel.add(typeField);
         inputPanel.add(startDateLabel);
         inputPanel.add(startDateField);
         inputPanel.add(endDateLabel);
@@ -67,13 +71,30 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
+                    String type = typeField.getText().trim().toLowerCase();
                     LocalDate startDate = LocalDate.parse(startDateField.getText());
                     LocalDate endDate = LocalDate.parse(endDateField.getText());
                     String description = descriptionField.getText();
 
-                    Appointment appointment = new Appointment(startDate, endDate, description);
+                    Appointment appointment;
+                    switch (type) {
+                        case "one-time":
+                            appointment = new OnetimeAppointment(startDate, description);
+                            break;
+                        case "daily":
+                            appointment = new DailyAppointment(startDate, endDate, description);
+                            break;
+                        case "monthly":
+                            appointment = new MonthlyAppointment(startDate, endDate, description);
+                            break;
+                        default:
+                            resultLabel.setText("Invalid appointment type. Use 'One-time', 'Daily', or 'Monthly'.");
+                            return;
+                    }
+
                     appointments.add(appointment);
-                    listModel.addElement(description + " (" + startDate + " to " + endDate + ")");
+                    listModel.addElement(type.substring(0, 1).toUpperCase() + type.substring(1) + ": " +
+                            description + " (" + startDate + " to " + endDate + ")");
                     resultLabel.setText("Appointment added successfully.");
                 } catch (Exception ex) {
                     resultLabel.setText("Invalid input. Please check the date format and fill all fields.");
