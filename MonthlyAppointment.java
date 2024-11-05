@@ -8,8 +8,8 @@ public class MonthlyAppointment extends Appointment {
 
     @Override
     public boolean occursOn(LocalDate date) {
-        // True if the date falls within the range and matches the day of the startDate
-        return isDateInRange(date) && date.getDayOfMonth() == getStartDate().getDayOfMonth();
+        // true if the date fits with the start day and is within the range
+        return inBetween(date) && date.getDayOfMonth() == getStartDate().getDayOfMonth();
     }
 
     @Override

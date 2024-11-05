@@ -1,6 +1,6 @@
 import java.time.LocalDate;
 
-public abstract class Appointment {
+public abstract class Appointment implements Comparable<Appointment> {
     private LocalDate startDate;
     private LocalDate endDate;
     private String description;
@@ -11,30 +11,53 @@ public abstract class Appointment {
         this.description = description;
     }
 
-    // Simple method to check if a date is between startDate and endDate
-    protected boolean isDateInRange(LocalDate date) {
-        return (date.isEqual(startDate) || date.isEqual(endDate) || (date.isAfter(startDate) && date.isBefore(endDate)));
+    // helpful way to determine whether a date falls between startDate and endDate
+    protected boolean inBetween(LocalDate date) {
+        return (date.isEqual(startDate) || date.isEqual(endDate) ||
+                (date.isAfter(startDate) && date.isBefore(endDate)));
     }
 
-    // Abstract method to be implemented by subclasses
+    // implementing an abstract method for subclasses
     public abstract boolean occursOn(LocalDate date);
 
+    // implementation of the compareTo function for sorting
     @Override
-    public String toString() {
-        return "Appointment: " + description + " (From " + startDate + " to " + endDate + ")";
+    public int compareTo(Appointment other) {
+        int result = this.startDate.compareTo(other.startDate);
+        if (result == 0) {
+            result = this.endDate.compareTo(other.endDate);
+            if (result == 0) {
+                result = this.description.compareTo(other.description);
+            }
+        }
+        return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj) {
+            return true;
+        }
+
+        if (obj == null || !(obj instanceof Appointment)) {
+            return false;
+        }
+
         Appointment other = (Appointment) obj;
-        return startDate.equals(other.startDate) &&
-                endDate.equals(other.endDate) &&
-                description.equals(other.description);
+        boolean sameStartDate = this.startDate.equals(other.startDate);
+        boolean sameEndDate = this.endDate.equals(other.endDate);
+        boolean sameDescription = this.description.equals(other.description);
+
+        return sameStartDate && sameEndDate && sameDescription;
     }
 
-    // Getter methods
+
+
+    @Override
+    public String toString() {
+        return description + " (" + startDate + " to " + endDate + ")";
+    }
+
     public LocalDate getStartDate() {
         return startDate;
     }
@@ -46,4 +69,5 @@ public abstract class Appointment {
     public String getDescription() {
         return description;
     }
+
 }
