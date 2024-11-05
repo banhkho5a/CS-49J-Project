@@ -3,38 +3,48 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
+import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
+import net.sourceforge.jdatepicker.impl.UtilDateModel;
+import net.sourceforge.jdatepicker.impl.DateComponentFormatter;
 
 public class Main {
     private static List<Appointment> appointments = new ArrayList<>();
 
     public static void main(String[] args) {
-        // GUI
+        // GUI setup
         JFrame frame = new JFrame("Appointment Manager");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(600, 400);
         frame.setLayout(new BorderLayout(10, 10));
 
-        // panel
+        // Panel setup
         JPanel inputPanel = new JPanel();
         inputPanel.setLayout(new GridLayout(5, 2, 10, 10));
 
-        JLabel typeLabel = new JLabel("Appointment Type (One-time, Daily, Monthly):");
-        JTextField typeField = new JTextField();
-        JLabel startDateLabel = new JLabel("Start Date (yyyy-mm-dd):");
-        JTextField startDateField = new JTextField();
-        JLabel endDateLabel = new JLabel("End Date (yyyy-mm-dd):");
-        JTextField endDateField = new JTextField();
+        JLabel typeLabel = new JLabel("Appointment Type:");
+        String[] types = {"One-time", "Daily", "Monthly"};
+        JComboBox<String> typeComboBox = new JComboBox<>(types);
+        JLabel startDateLabel = new JLabel("Start Date:");
+
+        // Use JDatePicker for the start date
+        JDatePickerImpl startDatePicker = createDatePicker();
+        JLabel endDateLabel = new JLabel("End Date:");
+
+        // Use JDatePicker for the end date
+        JDatePickerImpl endDatePicker = createDatePicker();
         JLabel descriptionLabel = new JLabel("Description:");
         JTextField descriptionField = new JTextField();
 
         inputPanel.add(typeLabel);
-        inputPanel.add(typeField);
+        inputPanel.add(typeComboBox);
         inputPanel.add(startDateLabel);
-        inputPanel.add(startDateField);
+        inputPanel.add(startDatePicker);
         inputPanel.add(endDateLabel);
-        inputPanel.add(endDateField);
+        inputPanel.add(endDatePicker);
         inputPanel.add(descriptionLabel);
         inputPanel.add(descriptionField);
 
@@ -71,9 +81,9 @@ public class Main {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    String type = typeField.getText().trim().toLowerCase();
-                    LocalDate startDate = LocalDate.parse(startDateField.getText());
-                    LocalDate endDate = LocalDate.parse(endDateField.getText());
+                    String type = ((String) typeComboBox.getSelectedItem()).toLowerCase();
+                    LocalDate startDate = convertToLocalDate(startDatePicker);
+                    LocalDate endDate = convertToLocalDate(endDatePicker);
                     String description = descriptionField.getText();
 
                     Appointment appointment;
@@ -140,4 +150,20 @@ public class Main {
 
         frame.setVisible(true);
     }
+
+    private static JDatePickerImpl createDatePicker() {
+        UtilDateModel model = new UtilDateModel();
+        JDatePanelImpl datePanel = new JDatePanelImpl(model);
+        return new JDatePickerImpl(datePanel, new DateComponentFormatter());
+    }
+
+    private static LocalDate convertToLocalDate(JDatePickerImpl datePicker) {
+        java.util.Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
+        return selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    }
 }
+
+
+// Here is how to run the program on terminal:
+// javac -cp .:lib/jdatepicker-1.3.2.jar Main.java
+// java -cp .:lib/jdatepicker-1.3.2.jar Main
