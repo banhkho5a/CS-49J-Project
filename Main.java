@@ -1,7 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -12,139 +11,153 @@ import net.sourceforge.jdatepicker.impl.UtilDateModel;
 import net.sourceforge.jdatepicker.impl.DateComponentFormatter;
 
 public class Main {
-    private static List<Appointment> appointments = new ArrayList<>();
+    private static AppointmentManager manager = new AppointmentManager();
 
     public static void main(String[] args) {
-        // GUI setup
-        JFrame frame = new JFrame("Appointment Manager");
+        JFrame frame = new JFrame("Manage Your Appointments");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 400);
-        frame.setLayout(new BorderLayout(10, 10));
+        frame.setSize(650, 450);
+        frame.setLayout(new BorderLayout(15, 15));
 
-        // Panel setup
-        JPanel inputPanel = new JPanel();
-        inputPanel.setLayout(new GridLayout(5, 2, 10, 10));
+        // Input section
+        JPanel inputPanel = new JPanel(new GridLayout(5, 2, 10, 10));
+        JLabel typeLabel = new JLabel("Type:");
+        String[] appointmentTypes = {"One-time", "Daily", "Monthly"};
+        JComboBox<String> typeDropdown = new JComboBox<>(appointmentTypes);
 
-        JLabel typeLabel = new JLabel("Appointment Type:");
-        String[] types = {"One-time", "Daily", "Monthly"};
-        JComboBox<String> typeComboBox = new JComboBox<>(types);
-        JLabel startDateLabel = new JLabel("Start Date:");
+        JLabel startLabel = new JLabel("Start Date:");
+        JDatePickerImpl startPicker = createDatePicker();
 
-        // Use JDatePicker for the start date
-        JDatePickerImpl startDatePicker = createDatePicker();
-        JLabel endDateLabel = new JLabel("End Date:");
+        JLabel endLabel = new JLabel("End Date:");
+        JDatePickerImpl endPicker = createDatePicker();
 
-        // Use JDatePicker for the end date
-        JDatePickerImpl endDatePicker = createDatePicker();
-        JLabel descriptionLabel = new JLabel("Description:");
-        JTextField descriptionField = new JTextField();
+        JLabel descLabel = new JLabel("Description:");
+        JTextField descField = new JTextField();
 
         inputPanel.add(typeLabel);
-        inputPanel.add(typeComboBox);
-        inputPanel.add(startDateLabel);
-        inputPanel.add(startDatePicker);
-        inputPanel.add(endDateLabel);
-        inputPanel.add(endDatePicker);
-        inputPanel.add(descriptionLabel);
-        inputPanel.add(descriptionField);
+        inputPanel.add(typeDropdown);
+        inputPanel.add(startLabel);
+        inputPanel.add(startPicker);
+        inputPanel.add(endLabel);
+        inputPanel.add(endPicker);
+        inputPanel.add(descLabel);
+        inputPanel.add(descField);
 
-        // buttons panels
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(1, 3, 10, 10));
-
-        JButton addButton = new JButton("Add Appointment");
-        JButton deleteButton = new JButton("Delete Appointment");
-        JButton checkButton = new JButton("Check Appointment");
+        // Buttons
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 4, 10, 10));
+        JButton addButton = new JButton("Add");
+        JButton deleteButton = new JButton("Delete");
+        JButton checkButton = new JButton("Check");
+        JButton updateButton = new JButton("Update");
 
         buttonPanel.add(addButton);
         buttonPanel.add(deleteButton);
         buttonPanel.add(checkButton);
+        buttonPanel.add(updateButton);
 
-        // list, result panels
-        JPanel listPanel = new JPanel();
-        listPanel.setLayout(new BorderLayout());
-
+        //display
+        JPanel displayPanel = new JPanel(new BorderLayout());
         DefaultListModel<String> listModel = new DefaultListModel<>();
         JList<String> appointmentList = new JList<>(listModel);
-        JScrollPane listScrollPane = new JScrollPane(appointmentList);
+        JScrollPane scrollPane = new JScrollPane(appointmentList);
 
-        JLabel resultLabel = new JLabel("", SwingConstants.CENTER);
+        JLabel statusLabel = new JLabel("", SwingConstants.CENTER);
 
-        listPanel.add(listScrollPane, BorderLayout.CENTER);
-        listPanel.add(resultLabel, BorderLayout.SOUTH);
+        displayPanel.add(scrollPane, BorderLayout.CENTER);
+        displayPanel.add(statusLabel, BorderLayout.SOUTH);
 
         frame.add(inputPanel, BorderLayout.NORTH);
         frame.add(buttonPanel, BorderLayout.CENTER);
-        frame.add(listPanel, BorderLayout.SOUTH);
+        frame.add(displayPanel, BorderLayout.SOUTH);
 
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    String type = ((String) typeComboBox.getSelectedItem()).toLowerCase();
-                    LocalDate startDate = convertToLocalDate(startDatePicker);
-                    LocalDate endDate = convertToLocalDate(endDatePicker);
-                    String description = descriptionField.getText();
+        // button actions
+        addButton.addActionListener(e -> {
+            try {
+                String type = (String) typeDropdown.getSelectedItem();
+                LocalDate start = convertToDate(startPicker);
+                LocalDate end = convertToDate(endPicker);
+                String description = descField.getText();
 
-                    Appointment appointment;
-                    switch (type) {
-                        case "one-time":
-                            appointment = new OnetimeAppointment(startDate, description);
-                            break;
-                        case "daily":
-                            appointment = new DailyAppointment(startDate, endDate, description);
-                            break;
-                        case "monthly":
-                            appointment = new MonthlyAppointment(startDate, endDate, description);
-                            break;
-                        default:
-                            resultLabel.setText("Invalid appointment type. Use 'One-time', 'Daily', or 'Monthly'.");
-                            return;
-                    }
-
-                    appointments.add(appointment);
-                    listModel.addElement(type.substring(0, 1).toUpperCase() + type.substring(1) + ": " +
-                            description + " (" + startDate + " to " + endDate + ")");
-                    resultLabel.setText("Appointment added successfully.");
-                } catch (Exception ex) {
-                    resultLabel.setText("Invalid input. Please check the date format and fill all fields.");
-                }
-            }
-        });
-
-        deleteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int selectedIndex = appointmentList.getSelectedIndex();
-                if (selectedIndex != -1) {
-                    appointments.remove(selectedIndex);
-                    listModel.remove(selectedIndex);
-                    resultLabel.setText("Appointment deleted successfully.");
+                Appointment appointment;
+                if ("One-time".equals(type)) {
+                    appointment = new OnetimeAppointment(start, description);
+                } else if ("Daily".equals(type)) {
+                    appointment = new DailyAppointment(start, end, description);
                 } else {
-                    resultLabel.setText("Please select an appointment to delete.");
+                    appointment = new MonthlyAppointment(start, end, description);
                 }
+
+                manager.add(appointment);
+                listModel.addElement(appointment.toString());
+                statusLabel.setText("Added successfully.");
+            } catch (Exception ex) {
+                statusLabel.setText("Error: " + ex.getMessage());
             }
         });
 
-        checkButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    LocalDate checkDate = LocalDate.parse(JOptionPane.showInputDialog("Enter date to check (yyyy-mm-dd):"));
-                    boolean found = false;
-                    for (Appointment appointment : appointments) {
-                        if (appointment.occursOn(checkDate)) {
-                            resultLabel.setText("Appointment found: " + appointment.getDescription());
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) {
-                        resultLabel.setText("No appointment occurs on this date.");
-                    }
-                } catch (Exception ex) {
-                    resultLabel.setText("Invalid date format. Please use yyyy-mm-dd.");
+        deleteButton.addActionListener(e -> {
+            int selected = appointmentList.getSelectedIndex();
+            if (selected >= 0) {
+                Appointment toDelete = manager.getAppointments()
+                        .stream()
+                        .toList()
+                        .get(selected);
+                manager.delete(toDelete);
+                listModel.remove(selected);
+                statusLabel.setText("Deleted.");
+            } else {
+                statusLabel.setText("Select an appointment to delete.");
+            }
+        });
+
+        checkButton.addActionListener(e -> {
+            try {
+                String input = JOptionPane.showInputDialog("Enter date (yyyy-mm-dd):");
+                LocalDate date = LocalDate.parse(input);
+
+                Appointment[] results = manager.getAppointmentsOn(date, null);
+                if (results.length > 0) {
+                    statusLabel.setText("Found: " + results[0].getDescription());
+                } else {
+                    statusLabel.setText("No appointments found.");
                 }
+            } catch (Exception ex) {
+                statusLabel.setText("Invalid date.");
+            }
+        });
+
+        updateButton.addActionListener(e -> {
+            int selected = appointmentList.getSelectedIndex();
+            if (selected >= 0) {
+                Appointment current = manager.getAppointments()
+                        .stream()
+                        .toList()
+                        .get(selected);
+
+                String newDescription = JOptionPane.showInputDialog("New description:");
+                if (newDescription == null || newDescription.isEmpty()) {
+                    statusLabel.setText("Update canceled.");
+                    return;
+                }
+
+                LocalDate newStart = LocalDate.parse(JOptionPane.showInputDialog("New start date (yyyy-mm-dd):"));
+                LocalDate newEnd = LocalDate.parse(JOptionPane.showInputDialog("New end date (yyyy-mm-dd):"));
+
+                String type = (String) typeDropdown.getSelectedItem();
+                Appointment updated;
+                if ("One-time".equals(type)) {
+                    updated = new OnetimeAppointment(newStart, newDescription);
+                } else if ("Daily".equals(type)) {
+                    updated = new DailyAppointment(newStart, newEnd, newDescription);
+                } else {
+                    updated = new MonthlyAppointment(newStart, newEnd, newDescription);
+                }
+
+                manager.update(current, updated);
+                listModel.set(selected, updated.toString());
+                statusLabel.setText("Updated.");
+            } else {
+                statusLabel.setText("Select an appointment to update.");
             }
         });
 
@@ -153,17 +166,12 @@ public class Main {
 
     private static JDatePickerImpl createDatePicker() {
         UtilDateModel model = new UtilDateModel();
-        JDatePanelImpl datePanel = new JDatePanelImpl(model);
-        return new JDatePickerImpl(datePanel, new DateComponentFormatter());
+        JDatePanelImpl panel = new JDatePanelImpl(model);
+        return new JDatePickerImpl(panel, new DateComponentFormatter());
     }
 
-    private static LocalDate convertToLocalDate(JDatePickerImpl datePicker) {
-        java.util.Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
-        return selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    private static LocalDate convertToDate(JDatePickerImpl picker) {
+        java.util.Date date = (java.util.Date) picker.getModel().getValue();
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 }
-
-
-// Here is how to run the program on terminal:
-// javac -cp .:lib/jdatepicker-1.3.2.jar Main.java
-// java -cp .:lib/jdatepicker-1.3.2.jar Main
