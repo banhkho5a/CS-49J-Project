@@ -1,10 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
 import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
 import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
 import net.sourceforge.jdatepicker.impl.UtilDateModel;
@@ -55,7 +52,7 @@ public class Main {
         buttonPanel.add(checkButton);
         buttonPanel.add(updateButton);
 
-        //display
+        // Display panel
         JPanel displayPanel = new JPanel(new BorderLayout());
         DefaultListModel<String> listModel = new DefaultListModel<>();
         JList<String> appointmentList = new JList<>(listModel);
@@ -70,7 +67,7 @@ public class Main {
         frame.add(buttonPanel, BorderLayout.CENTER);
         frame.add(displayPanel, BorderLayout.SOUTH);
 
-        // button actions
+        // Button actions
         addButton.addActionListener(e -> {
             try {
                 String type = (String) typeDropdown.getSelectedItem();
@@ -80,7 +77,7 @@ public class Main {
 
                 Appointment appointment;
                 if ("One-time".equals(type)) {
-                    appointment = new OnetimeAppointment(start, description);
+                    appointment = new OnetimeAppointment(start, end, description);
                 } else if ("Daily".equals(type)) {
                     appointment = new DailyAppointment(start, end, description);
                 } else {
@@ -146,7 +143,7 @@ public class Main {
                 String type = (String) typeDropdown.getSelectedItem();
                 Appointment updated;
                 if ("One-time".equals(type)) {
-                    updated = new OnetimeAppointment(newStart, newDescription);
+                    updated = new OnetimeAppointment(newStart, newEnd, newDescription);
                 } else if ("Daily".equals(type)) {
                     updated = new DailyAppointment(newStart, newEnd, newDescription);
                 } else {
@@ -172,6 +169,9 @@ public class Main {
 
     private static LocalDate convertToDate(JDatePickerImpl picker) {
         java.util.Date date = (java.util.Date) picker.getModel().getValue();
+        if (date == null) {
+            throw new IllegalArgumentException("Date not selected!");
+        }
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 }
