@@ -109,19 +109,45 @@ public class Main {
 
         checkButton.addActionListener(e -> {
             try {
-                String input = JOptionPane.showInputDialog("Enter date (yyyy-mm-dd):");
-                LocalDate date = LocalDate.parse(input);
+                // Prompt the user for start and end dates
+                String startInput = JOptionPane.showInputDialog("Enter start date (yyyy-mm-dd):");
+                String endInput = JOptionPane.showInputDialog("Enter end date (yyyy-mm-dd):");
 
-                Appointment[] results = manager.getAppointmentsOn(date, null);
-                if (results.length > 0) {
-                    statusLabel.setText("Found: " + results[0].getDescription());
-                } else {
-                    statusLabel.setText("No appointments found.");
+                // Parse the input dates
+                LocalDate startDate = LocalDate.parse(startInput);
+                LocalDate endDate = LocalDate.parse(endInput);
+
+                // Validate the date range
+                if (startDate.isAfter(endDate)) {
+                    statusLabel.setText("Error: Start date must be earlier than or equal to end date.");
+                    return;
                 }
+
+                // Find appointments that overlap with the provided range
+                StringBuilder results = new StringBuilder("Appointments matching range:\n");
+                boolean found = false;
+
+                for (Appointment appointment : manager.getAppointments()) {
+                    // Check if the appointment overlaps with the range
+                    if (!(appointment.getEndDate().isBefore(startDate) || appointment.getStartDate().isAfter(endDate))) {
+                        results.append(appointment.toString()).append("\n");
+                        found = true;
+                    }
+                }
+
+                // Display the results or indicate no matches found
+                if (found) {
+                    JOptionPane.showMessageDialog(null, results.toString(), "Results", JOptionPane.INFORMATION_MESSAGE);
+                    statusLabel.setText("Matching appointments found.");
+                } else {
+                    statusLabel.setText("No matching appointments found.");
+                }
+
             } catch (Exception ex) {
-                statusLabel.setText("Invalid date.");
+                statusLabel.setText("Invalid date input. Please try again.");
             }
         });
+
 
         updateButton.addActionListener(e -> {
             int selected = appointmentList.getSelectedIndex();

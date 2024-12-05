@@ -6,21 +6,21 @@ public abstract class Appointment implements Comparable<Appointment> {
     private String description;
 
     public Appointment(LocalDate startDate, LocalDate endDate, String description) {
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date must be earlier than or equal to end date.");
+        }
         this.startDate = startDate;
         this.endDate = endDate;
         this.description = description;
     }
 
-    // helpful way to determine whether a date falls between startDate and endDate
     protected boolean inBetween(LocalDate date) {
         return (date.isEqual(startDate) || date.isEqual(endDate) ||
                 (date.isAfter(startDate) && date.isBefore(endDate)));
     }
 
-    // implementing an abstract method for subclasses
     public abstract boolean occursOn(LocalDate date);
 
-    // implementation of the compareTo function for sorting
     @Override
     public int compareTo(Appointment other) {
         int result = this.startDate.compareTo(other.startDate);
@@ -38,20 +38,14 @@ public abstract class Appointment implements Comparable<Appointment> {
         if (this == obj) {
             return true;
         }
-
         if (obj == null || !(obj instanceof Appointment)) {
             return false;
         }
-
         Appointment other = (Appointment) obj;
-        boolean sameStartDate = this.startDate.equals(other.startDate);
-        boolean sameEndDate = this.endDate.equals(other.endDate);
-        boolean sameDescription = this.description.equals(other.description);
-
-        return sameStartDate && sameEndDate && sameDescription;
+        return this.startDate.equals(other.startDate) &&
+                this.endDate.equals(other.endDate) &&
+                this.description.equals(other.description);
     }
-
-
 
     @Override
     public String toString() {
@@ -69,5 +63,4 @@ public abstract class Appointment implements Comparable<Appointment> {
     public String getDescription() {
         return description;
     }
-
 }
