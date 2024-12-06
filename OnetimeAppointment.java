@@ -2,15 +2,15 @@ import java.time.LocalDate;
 
 public class OnetimeAppointment extends Appointment {
 
-    public OnetimeAppointment(LocalDate startDate, LocalDate endDate, String description) {
-        // calls the superclass constructor to use both startDate and endDate
-        super(startDate, endDate, description);
+    public OnetimeAppointment(LocalDate startDate, String description) {
+        // calls a single-day appointment by using the superclass constructor and setting endDate to startDate
+        super(startDate, startDate, description);
     }
 
     @Override
     public boolean occursOn(LocalDate date) {
-        // check if the date falls between startDate and endDate
-        return inBetween(date);
+        // true only if the date corresponds to start date
+        return date.isEqual(getStartDate());
     }
 
     @Override

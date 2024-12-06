@@ -1,7 +1,10 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
 import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
 import net.sourceforge.jdatepicker.impl.UtilDateModel;
@@ -52,7 +55,7 @@ public class Main {
         buttonPanel.add(checkButton);
         buttonPanel.add(updateButton);
 
-        // Display panel
+        // Display
         JPanel displayPanel = new JPanel(new BorderLayout());
         DefaultListModel<String> listModel = new DefaultListModel<>();
         JList<String> appointmentList = new JList<>(listModel);
@@ -77,7 +80,7 @@ public class Main {
 
                 Appointment appointment;
                 if ("One-time".equals(type)) {
-                    appointment = new OnetimeAppointment(start, end, description);
+                    appointment = new OnetimeAppointment(start, description);
                 } else if ("Daily".equals(type)) {
                     appointment = new DailyAppointment(start, end, description);
                 } else {
@@ -85,7 +88,7 @@ public class Main {
                 }
 
                 manager.add(appointment);
-                listModel.addElement(appointment.toString());
+                updateAppointmentList(listModel);
                 statusLabel.setText("Added successfully.");
             } catch (Exception ex) {
                 statusLabel.setText("Error: " + ex.getMessage());
@@ -95,12 +98,10 @@ public class Main {
         deleteButton.addActionListener(e -> {
             int selected = appointmentList.getSelectedIndex();
             if (selected >= 0) {
-                Appointment toDelete = manager.getAppointments()
-                        .stream()
-                        .toList()
+                Appointment toDelete = manager.getSortedAppointments()
                         .get(selected);
                 manager.delete(toDelete);
-                listModel.remove(selected);
+                updateAppointmentList(listModel);
                 statusLabel.setText("Deleted.");
             } else {
                 statusLabel.setText("Select an appointment to delete.");
@@ -109,52 +110,24 @@ public class Main {
 
         checkButton.addActionListener(e -> {
             try {
-                // Prompt the user for start and end dates
-                String startInput = JOptionPane.showInputDialog("Enter start date (yyyy-mm-dd):");
-                String endInput = JOptionPane.showInputDialog("Enter end date (yyyy-mm-dd):");
+                String input = JOptionPane.showInputDialog("Enter date (yyyy-mm-dd):");
+                LocalDate date = LocalDate.parse(input);
 
-                // Parse the input dates
-                LocalDate startDate = LocalDate.parse(startInput);
-                LocalDate endDate = LocalDate.parse(endInput);
-
-                // Validate the date range
-                if (startDate.isAfter(endDate)) {
-                    statusLabel.setText("Error: Start date must be earlier than or equal to end date.");
-                    return;
-                }
-
-                // Find appointments that overlap with the provided range
-                StringBuilder results = new StringBuilder("Appointments matching range:\n");
-                boolean found = false;
-
-                for (Appointment appointment : manager.getAppointments()) {
-                    // Check if the appointment overlaps with the range
-                    if (!(appointment.getEndDate().isBefore(startDate) || appointment.getStartDate().isAfter(endDate))) {
-                        results.append(appointment.toString()).append("\n");
-                        found = true;
-                    }
-                }
-
-                // Display the results or indicate no matches found
-                if (found) {
-                    JOptionPane.showMessageDialog(null, results.toString(), "Results", JOptionPane.INFORMATION_MESSAGE);
-                    statusLabel.setText("Matching appointments found.");
+                Appointment[] results = manager.getAppointmentsOn(date, null);
+                if (results.length > 0) {
+                    statusLabel.setText("Found: " + results[0].getDescription());
                 } else {
-                    statusLabel.setText("No matching appointments found.");
+                    statusLabel.setText("No appointments found.");
                 }
-
             } catch (Exception ex) {
-                statusLabel.setText("Invalid date input. Please try again.");
+                statusLabel.setText("Invalid date.");
             }
         });
-
 
         updateButton.addActionListener(e -> {
             int selected = appointmentList.getSelectedIndex();
             if (selected >= 0) {
-                Appointment current = manager.getAppointments()
-                        .stream()
-                        .toList()
+                Appointment current = manager.getSortedAppointments()
                         .get(selected);
 
                 String newDescription = JOptionPane.showInputDialog("New description:");
@@ -169,7 +142,7 @@ public class Main {
                 String type = (String) typeDropdown.getSelectedItem();
                 Appointment updated;
                 if ("One-time".equals(type)) {
-                    updated = new OnetimeAppointment(newStart, newEnd, newDescription);
+                    updated = new OnetimeAppointment(newStart, newDescription);
                 } else if ("Daily".equals(type)) {
                     updated = new DailyAppointment(newStart, newEnd, newDescription);
                 } else {
@@ -177,7 +150,7 @@ public class Main {
                 }
 
                 manager.update(current, updated);
-                listModel.set(selected, updated.toString());
+                updateAppointmentList(listModel);
                 statusLabel.setText("Updated.");
             } else {
                 statusLabel.setText("Select an appointment to update.");
@@ -185,6 +158,14 @@ public class Main {
         });
 
         frame.setVisible(true);
+    }
+
+    private static void updateAppointmentList(DefaultListModel<String> listModel) {
+        listModel.clear();
+        List<Appointment> sortedAppointments = manager.getSortedAppointments();
+        for (Appointment appointment : sortedAppointments) {
+            listModel.addElement(appointment.toString());
+        }
     }
 
     private static JDatePickerImpl createDatePicker() {
@@ -195,9 +176,6 @@ public class Main {
 
     private static LocalDate convertToDate(JDatePickerImpl picker) {
         java.util.Date date = (java.util.Date) picker.getModel().getValue();
-        if (date == null) {
-            throw new IllegalArgumentException("Date not selected!");
-        }
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 }

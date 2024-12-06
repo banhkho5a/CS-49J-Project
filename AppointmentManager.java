@@ -1,7 +1,5 @@
+import java.util.*;
 import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.PriorityQueue;
 
 public class AppointmentManager {
 
@@ -10,11 +8,6 @@ public class AppointmentManager {
     // Constructor
     public AppointmentManager() {
         this.appointments = new HashSet<>();
-    }
-
-    // Getter for appointments
-    public HashSet<Appointment> getAppointments() {
-        return appointments;
     }
 
     // Add an appointment
@@ -39,22 +32,29 @@ public class AppointmentManager {
         add(modified);    // Add the modified appointment
     }
 
+    // Get sorted appointments
+    public List<Appointment> getSortedAppointments() {
+        List<Appointment> sortedAppointments = new ArrayList<>(appointments);
+        sortedAppointments.sort(null);  // Uses the compareTo method for sorting
+        return sortedAppointments;
+    }
+
     // Get appointments on a specific date with optional comparator
     public Appointment[] getAppointmentsOn(LocalDate date, Comparator<Appointment> comparator) {
-        PriorityQueue<Appointment> tempQueue;
-
-        if (comparator != null) {
-            tempQueue = new PriorityQueue<>(comparator);
-        } else {
-            tempQueue = new PriorityQueue<>();
-        }
+        List<Appointment> filteredAppointments = new ArrayList<>();
 
         for (Appointment a : appointments) {
             if (date == null || a.occursOn(date)) {
-                tempQueue.add(a);
+                filteredAppointments.add(a);
             }
         }
 
-        return tempQueue.toArray(new Appointment[0]);
+        if (comparator != null) {
+            filteredAppointments.sort(comparator);
+        } else {
+            filteredAppointments.sort(null);  // Use default sorting
+        }
+
+        return filteredAppointments.toArray(new Appointment[0]);
     }
 }
