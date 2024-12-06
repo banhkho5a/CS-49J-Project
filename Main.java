@@ -157,14 +157,26 @@ public class Main {
                         .toList()
                         .get(selected);
 
-                String newDescription = JOptionPane.showInputDialog("New description:");
+                String newDescription = (String) JOptionPane.showInputDialog(null, "New description:", "Update", JOptionPane.QUESTION_MESSAGE, null, null, current.getDescription());
+//                String newDescription = JOptionPane.showInputDialog("New description:");
                 if (newDescription == null || newDescription.isEmpty()) {
                     statusLabel.setText("Update canceled.");
                     return;
                 }
 
-                LocalDate newStart = LocalDate.parse(JOptionPane.showInputDialog("New start date (yyyy-mm-dd):"));
-                LocalDate newEnd = LocalDate.parse(JOptionPane.showInputDialog("New end date (yyyy-mm-dd):"));
+                String newStartInput = (String) JOptionPane.showInputDialog(null, "New start date (yyyy-mm-dd):", "Update", JOptionPane.QUESTION_MESSAGE, null, null, current.getStartDate().toString());
+                if (newStartInput == null || newStartInput.isEmpty()) {
+                    statusLabel.setText("Update canceled.");
+                    return;
+                }
+                LocalDate newStart = newStartInput == null ? current.getStartDate() : LocalDate.parse(newStartInput);
+
+                String newEndInput = (String) JOptionPane.showInputDialog(null, "New end date (yyyy-mm-dd):", "Update", JOptionPane.QUESTION_MESSAGE, null, null, current.getEndDate().toString());
+                if (newEndInput == null || newEndInput.isEmpty()) {
+                    statusLabel.setText("Update canceled.");
+                    return;
+                }
+                LocalDate newEnd = newEndInput == null ? current.getEndDate() : LocalDate.parse(newEndInput);
 
                 String type = (String) typeDropdown.getSelectedItem();
                 Appointment updated;
@@ -201,3 +213,7 @@ public class Main {
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 }
+
+// TODO: handle invalid update input - handle crash
+// TODO: sort appointments in order, or description
+// TODO: display appointments on a certain date, or display all: create buttons or ....
