@@ -57,4 +57,27 @@ public class AppointmentManager {
 
         return filteredAppointments.toArray(new Appointment[0]);
     }
+
+    // New Method: Get appointments within a date range
+    public List<Appointment> getAppointmentsByDateRange(LocalDate startDate, LocalDate endDate) {
+        List<Appointment> filteredAppointments = new ArrayList<>();
+        for (Appointment appointment : appointments) {
+            if ((appointment.getStartDate().isAfter(startDate) || appointment.getStartDate().isEqual(startDate)) &&
+                    (appointment.getEndDate().isBefore(endDate) || appointment.getEndDate().isEqual(endDate))) {
+                filteredAppointments.add(appointment);
+            }
+        }
+        return filteredAppointments;
+    }
+
+    // New Method: Get appointments by description keyword
+    public List<Appointment> getAppointmentsByDescription(String keyword) {
+        List<Appointment> filteredAppointments = new ArrayList<>();
+        for (Appointment appointment : appointments) {
+            if (appointment.matchesDescription(keyword)) {
+                filteredAppointments.add(appointment);
+            }
+        }
+        return filteredAppointments;
+    }
 }

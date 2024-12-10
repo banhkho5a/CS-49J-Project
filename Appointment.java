@@ -18,16 +18,16 @@ public abstract class Appointment implements Comparable<Appointment> {
         this.description = description;
     }
 
-    // helpful way to determine whether a date falls between startDate and endDate
+    // Determines whether a date falls within the startDate and endDate range
     protected boolean inBetween(LocalDate date) {
         return (date.isEqual(startDate) || date.isEqual(endDate) ||
                 (date.isAfter(startDate) && date.isBefore(endDate)));
     }
 
-    // implementing an abstract method for subclasses
+    // Abstract method for subclasses to implement occurrence logic
     public abstract boolean occursOn(LocalDate date);
 
-    // implementation of the compareTo function for sorting
+    // Implementing the compareTo function for sorting
     @Override
     public int compareTo(Appointment other) {
         int result = this.startDate.compareTo(other.startDate);
@@ -63,6 +63,7 @@ public abstract class Appointment implements Comparable<Appointment> {
         return description + " (" + startDate + " to " + endDate + ")";
     }
 
+    // Getters for filtering functionality
     public LocalDate getStartDate() {
         return startDate;
     }
@@ -73,5 +74,10 @@ public abstract class Appointment implements Comparable<Appointment> {
 
     public String getDescription() {
         return description;
+    }
+
+    // Additional method for checking if a description matches a keyword
+    public boolean matchesDescription(String keyword) {
+        return description.toLowerCase().contains(keyword.toLowerCase());
     }
 }
