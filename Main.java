@@ -1,9 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.List;
 import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
 import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
@@ -16,7 +14,7 @@ public class Main {
     public static void main(String[] args) {
         JFrame frame = new JFrame("Manage Your Appointments");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(650, 450);
+        frame.setSize(700, 500);
         frame.setLayout(new BorderLayout(15, 15));
 
         // Input section
@@ -44,16 +42,22 @@ public class Main {
         inputPanel.add(descField);
 
         // Buttons
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 4, 10, 10));
+        JPanel buttonPanel = new JPanel(new GridLayout(2, 4, 10, 10));
         JButton addButton = new JButton("Add");
         JButton deleteButton = new JButton("Delete");
-        JButton checkButton = new JButton("Check");
+       //JButton checkButton = new JButton("Check");
         JButton updateButton = new JButton("Update");
+        JButton filterByDateButton = new JButton("Filter by Date");
+        JButton filterByDescriptionButton = new JButton("Filter by Description");
+        JButton showAllButton = new JButton("Show All");
 
         buttonPanel.add(addButton);
         buttonPanel.add(deleteButton);
-        buttonPanel.add(checkButton);
+        //buttonPanel.add(checkButton);
         buttonPanel.add(updateButton);
+        buttonPanel.add(filterByDateButton);
+        buttonPanel.add(filterByDescriptionButton);
+        buttonPanel.add(showAllButton);
 
         // Display
         JPanel displayPanel = new JPanel(new BorderLayout());
@@ -98,8 +102,7 @@ public class Main {
         deleteButton.addActionListener(e -> {
             int selected = appointmentList.getSelectedIndex();
             if (selected >= 0) {
-                Appointment toDelete = manager.getSortedAppointments()
-                        .get(selected);
+                Appointment toDelete = manager.getSortedAppointments().get(selected);
                 manager.delete(toDelete);
                 updateAppointmentList(listModel);
                 statusLabel.setText("Deleted.");
@@ -108,7 +111,7 @@ public class Main {
             }
         });
 
-        checkButton.addActionListener(e -> {
+        /*checkButton.addActionListener(e -> {
             try {
                 String input = JOptionPane.showInputDialog("Enter date (yyyy-mm-dd):");
                 LocalDate date = LocalDate.parse(input);
@@ -123,32 +126,17 @@ public class Main {
                 statusLabel.setText("Invalid date.");
             }
         });
-
+*/
         updateButton.addActionListener(e -> {
             int selected = appointmentList.getSelectedIndex();
             if (selected >= 0) {
-                Appointment current = manager.getSortedAppointments()
-                        .get(selected);
+                Appointment current = manager.getSortedAppointments().get(selected);
 
-                String newDescription = (String) JOptionPane.showInputDialog(null, "New description:", "Update", JOptionPane.QUESTION_MESSAGE, null, null, current.getDescription());
-//                String newDescription = JOptionPane.showInputDialog("New description:");
-                if (newDescription == null || newDescription.isEmpty()) {
-                    statusLabel.setText("Update canceled.");
-                    return;
-                }
+                String newDescription = JOptionPane.showInputDialog("New description:", current.getDescription());
+                String newStartInput = JOptionPane.showInputDialog("New start date (yyyy-mm-dd):", current.getStartDate().toString());
+                String newEndInput = JOptionPane.showInputDialog("New end date (yyyy-mm-dd):", current.getEndDate().toString());
 
-                String newStartInput = (String) JOptionPane.showInputDialog(null, "New start date (yyyy-mm-dd):", "Update", JOptionPane.QUESTION_MESSAGE, null, null, current.getStartDate().toString());
-                if (newStartInput == null || newStartInput.isEmpty()) {
-                    statusLabel.setText("Update canceled.");
-                    return;
-                }
                 LocalDate newStart = newStartInput == null ? current.getStartDate() : LocalDate.parse(newStartInput);
-
-                String newEndInput = (String) JOptionPane.showInputDialog(null, "New end date (yyyy-mm-dd):", "Update", JOptionPane.QUESTION_MESSAGE, null, null, current.getEndDate().toString());
-                if (newEndInput == null || newEndInput.isEmpty()) {
-                    statusLabel.setText("Update canceled.");
-                    return;
-                }
                 LocalDate newEnd = newEndInput == null ? current.getEndDate() : LocalDate.parse(newEndInput);
 
                 String type = (String) typeDropdown.getSelectedItem();
@@ -167,6 +155,43 @@ public class Main {
             } else {
                 statusLabel.setText("Select an appointment to update.");
             }
+        });
+
+        filterByDateButton.addActionListener(e -> {
+            try {
+                String inputStart = JOptionPane.showInputDialog("Enter start date (yyyy-mm-dd):");
+                String inputEnd = JOptionPane.showInputDialog("Enter end date (yyyy-mm-dd):");
+                LocalDate startDate = LocalDate.parse(inputStart);
+                LocalDate endDate = LocalDate.parse(inputEnd);
+
+                List<Appointment> filtered = manager.getAppointmentsByDateRange(startDate, endDate);
+                listModel.clear();
+                for (Appointment appointment : filtered) {
+                    listModel.addElement(appointment.toString());
+                }
+                statusLabel.setText("Filtered by date range.");
+            } catch (Exception ex) {
+                statusLabel.setText("Invalid dates.");
+            }
+        });
+
+        filterByDescriptionButton.addActionListener(e -> {
+            String keyword = JOptionPane.showInputDialog("Enter description keyword:");
+            if (keyword != null && !keyword.isEmpty()) {
+                List<Appointment> filtered = manager.getAppointmentsByDescription(keyword);
+                listModel.clear();
+                for (Appointment appointment : filtered) {
+                    listModel.addElement(appointment.toString());
+                }
+                statusLabel.setText("Filtered by description.");
+            } else {
+                statusLabel.setText("Enter a valid keyword.");
+            }
+        });
+
+        showAllButton.addActionListener(e -> {
+            updateAppointmentList(listModel);
+            statusLabel.setText("Displaying all appointments.");
         });
 
         frame.setVisible(true);
@@ -191,7 +216,3 @@ public class Main {
         return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 }
-
-// TODO: handle invalid update input - handle crash
-// TODO: sort appointments in order, or description
-// TODO: display appointments on a certain date, or display all: create buttons or ....
